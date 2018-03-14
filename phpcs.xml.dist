@@ -154,7 +154,6 @@
         <exclude-pattern>lib/Doctrine/ORM/Query.php</exclude-pattern>
         <exclude-pattern>lib/Doctrine/ORM/TransactionRequiredException.php</exclude-pattern>
         <exclude-pattern>lib/Doctrine/ORM/UnexpectedResultException.php</exclude-pattern>
-        <exclude-pattern>lib/Doctrine/ORM/UnitOfWork.php</exclude-pattern>
     </rule>
 
     <!-- incrementally migrating to strict typing -->
@@ -193,6 +192,5 @@
         <exclude-pattern>lib/Doctrine/ORM/Query.php</exclude-pattern>
         <exclude-pattern>lib/Doctrine/ORM/TransactionRequiredException.php</exclude-pattern>
         <exclude-pattern>lib/Doctrine/ORM/UnexpectedResultException.php</exclude-pattern>
-        <exclude-pattern>lib/Doctrine/ORM/UnitOfWork.php</exclude-pattern>
     </rule>
 </ruleset>
