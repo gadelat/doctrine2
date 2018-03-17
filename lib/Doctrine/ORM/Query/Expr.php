@@ -27,14 +27,14 @@ class Expr
      *     // (u.type = ?1) AND (u.role = ?2)
      *     $expr->andX($expr->eq('u.type', ':1'), $expr->eq('u.role', ':2'));
      *
-     * @param Expr\Comparison|Expr\Func|Expr\Orx $x Optional clause. Defaults to null, but requires at least one
-     *                                              defined when converting to string.
+     * @param Expr\Comparison|Expr\Func|Expr\Orx ...$x Optional clause. Defaults to null, but requires at least one
+     *                                                 defined when converting to string.
      *
      * @return Expr\Andx
      */
-    public function andX($x = null)
+    public function andX(...$x)
     {
-        return new Expr\Andx(func_get_args());
+        return new Expr\Andx($x);
     }
 
     /**
@@ -46,14 +46,14 @@ class Expr
      *     // (u.type = ?1) OR (u.role = ?2)
      *     $q->where($q->expr()->orX('u.type = ?1', 'u.role = ?2'));
      *
-     * @param mixed $x Optional clause. Defaults to null, but requires
-     *                 at least one defined when converting to string.
+     * @param mixed ...$x Optional clause. Defaults to null, but requires
+     *                    at least one defined when converting to string.
      *
      * @return Expr\Orx
      */
-    public function orX($x = null)
+    public function orX(...$x)
     {
-        return new Expr\Orx(func_get_args());
+        return new Expr\Orx($x);
     }
 
     /**
@@ -246,13 +246,13 @@ class Expr
     /**
      * Creates an instance of COUNT(DISTINCT) function, with the given argument.
      *
-     * @param mixed $x Argument to be used in COUNT(DISTINCT) function.
+     * @param mixed ...$x Argument to be used in COUNT(DISTINCT) function.
      *
      * @return string
      */
-    public function countDistinct($x)
+    public function countDistinct(...$x)
     {
-        return 'COUNT(DISTINCT ' . implode(', ', func_get_args()) . ')';
+        return 'COUNT(DISTINCT ' . implode(', ', $x) . ')';
     }
 
     /**
@@ -511,12 +511,12 @@ class Expr
     /**
      * Creates a CONCAT() function expression with the given arguments.
      *
-     * @param mixed $x     First argument to be used in CONCAT() function.
-     * @param mixed $y,... Other arguments to be used in CONCAT() function.
+     * @param mixed $x    First argument to be used in CONCAT() function.
+     * @param mixed ...$y Other arguments to be used in CONCAT() function.
      *
      * @return Expr\Func
      */
-    public function concat($x, $y)
+    public function concat($x, ...$y)
     {
         return new Expr\Func('CONCAT', func_get_args());
     }

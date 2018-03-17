@@ -11,8 +11,6 @@ use Doctrine\ORM\Query\QueryExpressionVisitor;
 use function array_keys;
 use function array_merge;
 use function array_unshift;
-use function func_get_args;
-use function func_num_args;
 use function implode;
 use function in_array;
 use function is_array;
@@ -682,17 +680,15 @@ class QueryBuilder
      *         ->leftJoin('u.Phonenumbers', 'p');
      * </code>
      *
-     * @param mixed $select The selection expressions.
+     * @param mixed ...$selects The selection expressions.
      */
-    public function select($select = null) : self
+    public function select(...$selects)
     {
         $this->type = self::SELECT;
 
         if (empty($select)) {
             return $this;
         }
-
-        $selects = is_array($select) ? $select : func_get_args();
 
         return $this->add('select', new Expr\Select($selects), false);
     }
@@ -725,17 +721,15 @@ class QueryBuilder
      *         ->leftJoin('u.Phonenumbers', 'p');
      * </code>
      *
-     * @param mixed $select The selection expression.
+     * @param mixed ...$selects The selection expression.
      */
-    public function addSelect($select = null) : self
+    public function addSelect(...$selects)
     {
         $this->type = self::SELECT;
 
         if (empty($select)) {
             return $this;
         }
-
-        $selects = is_array($select) ? $select : func_get_args();
 
         return $this->add('select', new Expr\Select($selects), true);
     }
@@ -983,12 +977,12 @@ class QueryBuilder
      *         ->where($or);
      * </code>
      *
-     * @param mixed $predicates The restriction predicates.
+     * @param mixed ...$predicates The restriction predicates.
      */
-    public function where($predicates) : self
+    public function where(...$predicates) : self
     {
-        if (! (func_num_args() === 1 && $predicates instanceof Expr\Composite)) {
-            $predicates = new Expr\Andx(func_get_args());
+        if (! (count($predicates) === 1 && $predicates[0] instanceof Expr\Composite)) {
+            $predicates = new Expr\Andx($predicates);
         }
 
         return $this->add('where', $predicates);
@@ -1006,20 +1000,19 @@ class QueryBuilder
      *         ->andWhere('u.is_active = 1');
      * </code>
      *
-     * @//param mixed $where The query restrictions.
+     * @param mixed ...$predicates The query predicates.
      *
      * @see where()
      */
-    public function andWhere() : self
+    public function andWhere(...$predicates) : self
     {
-        $args  = func_get_args();
         $where = $this->getDQLPart('where');
 
         if ($where instanceof Expr\Andx) {
-            $where->addMultiple($args);
+            $where->addMultiple($predicates);
         } else {
-            array_unshift($args, $where);
-            $where = new Expr\Andx($args);
+            array_unshift($predicates, $where);
+            $where = new Expr\Andx($predicates);
         }
 
         return $this->add('where', $where);
@@ -1037,20 +1030,19 @@ class QueryBuilder
      *         ->orWhere('u.id = 2');
      * </code>
      *
-     * @//param mixed $where The WHERE statement.
+     * @param mixed ...$predicates The query predicates.
      *
      * @see where()
      */
-    public function orWhere() : self
+    public function orWhere(...$predicates) : self
     {
-        $args  = func_get_args();
         $where = $this->getDQLPart('where');
 
         if ($where instanceof Expr\Orx) {
-            $where->addMultiple($args);
+            $where->addMultiple($predicates);
         } else {
-            array_unshift($args, $where);
-            $where = new Expr\Orx($args);
+            array_unshift($predicates, $where);
+            $where = new Expr\Orx($predicates);
         }
 
         return $this->add('where', $where);
@@ -1067,11 +1059,11 @@ class QueryBuilder
      *         ->groupBy('u.id');
      * </code>
      *
-     * @param string $groupBy The grouping expression.
+     * @param mixed ...$groupBy The grouping expression(s).
      */
-    public function groupBy(string $groupBy) : self
+    public function groupBy(...$groupBy) : self
     {
-        return $this->add('groupBy', new Expr\GroupBy(func_get_args()));
+        return $this->add('groupBy', new Expr\GroupBy($groupBy));
     }
 
     /**
@@ -1085,23 +1077,23 @@ class QueryBuilder
      *         ->addGroupBy('u.createdAt');
      * </code>
      *
-     * @param string $groupBy The grouping expression.
+     * @param mixed ...$groupBy The grouping expression(s).
      */
-    public function addGroupBy(string $groupBy) : self
+    public function addGroupBy(...$groupBy) : self
     {
-        return $this->add('groupBy', new Expr\GroupBy(func_get_args()), true);
+        return $this->add('groupBy', new Expr\GroupBy($groupBy), true);
     }
 
     /**
      * Specifies a restriction over the groups of the query.
      * Replaces any previous having restrictions, if any.
      *
-     * @param mixed $having The restriction over the groups.
+     * @param mixed ...$having The restriction over the groups.
      */
-    public function having($having) : self
+    public function having(...$having) : self
     {
-        if (! (func_num_args() === 1 && ($having instanceof Expr\Andx || $having instanceof Expr\Orx))) {
-            $having = new Expr\Andx(func_get_args());
+        if (! (count($having) === 1 && ($having[0] instanceof Expr\Andx || $having[0] instanceof Expr\Orx))) {
+            $having = new Expr\Andx($having);
         }
 
         return $this->add('having', $having);
@@ -1111,42 +1103,40 @@ class QueryBuilder
      * Adds a restriction over the groups of the query, forming a logical
      * conjunction with any existing having restrictions.
      *
-     * @param mixed $having The restriction to append.
+     * @param mixed ...$having The restriction over the groups to append.
      */
-    public function andHaving($having) : self
+    public function andHaving(...$having) : self
     {
-        $args   = func_get_args();
-        $having = $this->getDQLPart('having');
+        $queryPart = $this->getDQLPart('having');
 
-        if ($having instanceof Expr\Andx) {
-            $having->addMultiple($args);
+        if ($queryPart instanceof Expr\Andx) {
+            $queryPart->addMultiple($having);
         } else {
-            array_unshift($args, $having);
-            $having = new Expr\Andx($args);
+            array_unshift($args, $queryPart);
+            $queryPart = new Expr\Andx($having);
         }
 
-        return $this->add('having', $having);
+        return $this->add('having', $queryPart);
     }
 
     /**
      * Adds a restriction over the groups of the query, forming a logical
      * disjunction with any existing having restrictions.
      *
-     * @param mixed $having The restriction to add.
+     * @param mixed ...$having The restriction to add.
      */
-    public function orHaving($having) : self
+    public function orHaving(...$having) : self
     {
-        $args   = func_get_args();
-        $having = $this->getDQLPart('having');
+        $queryPart = $this->getDQLPart('having');
 
-        if ($having instanceof Expr\Orx) {
-            $having->addMultiple($args);
+        if ($queryPart instanceof Expr\Orx) {
+            $queryPart->addMultiple($having);
         } else {
-            array_unshift($args, $having);
-            $having = new Expr\Orx($args);
+            array_unshift($having, $queryPart);
+            $queryPart = new Expr\Orx($having);
         }
 
-        return $this->add('having', $having);
+        return $this->add('having', $queryPart);
     }
 
     /**
